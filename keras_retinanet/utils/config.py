@@ -18,7 +18,7 @@ import configparser
 import numpy as np
 import keras
 from ..utils.anchors import AnchorParameters
-
+import csv
 
 def read_config_file(config_path):
     config = configparser.ConfigParser()
@@ -34,3 +34,19 @@ def parse_anchor_parameters(config):
     strides = list(map(int, config['anchor_parameters']['strides'].split(' ')))
 
     return AnchorParameters(sizes, strides, ratios, scales)
+
+def read_transformation_kw_args(transform_file_path):
+    with open(transform_file_path, 'r') as file:
+        return parse_transform_file(file)
+
+def parse_transform_file(file):
+    csv_file = csv.writer(file, delimiter=',')
+    kw_args = {}
+    for row in csv_file:
+        if row[1] = 'i':
+            kw_args[row[0]] = int(row[2]
+        elif row[1] = 't':
+            kw_args[row[0]] = (int(row[2]), int(row[3]))
+    return kw_args
+
+
