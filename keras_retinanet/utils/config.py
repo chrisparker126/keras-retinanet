@@ -35,18 +35,24 @@ def parse_anchor_parameters(config):
 
     return AnchorParameters(sizes, strides, ratios, scales)
 
-def read_transformation_kw_args(transform_file_path):
+def read_transform_file(transform_file_path):
     with open(transform_file_path, 'r') as file:
         return parse_transform_file(file)
 
 def parse_transform_file(file):
-    csv_file = csv.writer(file, delimiter=',')
+    csv_file = csv.reader(file, delimiter=',')
     kw_args = {}
     for row in csv_file:
-        if row[1] = 'i':
-            kw_args[row[0]] = int(row[2]
-        elif row[1] = 't':
+        if row[1] == 'i':
+            kw_args[row[0]] = int(row[2])
+        elif row[1] == 'f':
+            kw_args[row[0]] = float(row[2])
+        elif row[1] == 't':
             kw_args[row[0]] = (int(row[2]), int(row[3]))
+        elif row[1] == 'tf':
+            kw_args[row[0]] = (float(row[2]), float(row[3]))
+        else:
+            raise Exception("no value type info for key")
     return kw_args
 
 

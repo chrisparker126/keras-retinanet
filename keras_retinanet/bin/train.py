@@ -43,7 +43,7 @@ from ..preprocessing.kitti import KittiGenerator
 from ..preprocessing.open_images import OpenImagesGenerator
 from ..preprocessing.pascal_voc import PascalVocGenerator
 from ..utils.anchors import make_shapes_callback
-from ..utils.config import read_config_file, parse_anchor_parameters
+from ..utils.config import read_config_file, parse_anchor_parameters, read_transform_file
 from ..utils.keras_version import check_keras_version
 from ..utils.model import freeze as freeze_model
 from ..utils.transform import random_transform_generator
@@ -224,23 +224,23 @@ def create_generators(args, preprocess_image):
 
     # create random transform generator for augmenting training data
     if args.random_transform:
-        if args.tranform_file_path:
+        if args.transform_file_path:
              transform_generator = random_transform_generator(                 
-             **read_transform_config(args.tranform_file_path)
+             **read_transform_file(args.transform_file_path)
            )
         else:
-	    transform_generator = random_transform_generator(
-	      min_rotation=-0.1,
-	      max_rotation=0.1,
-	      min_translation=(-0.1, -0.1),
-	      max_translation=(0.1, 0.1),
-	      min_shear=-0.1,
-	      max_shear=0.1,
-	      min_scaling=(0.9, 0.9),
-	      max_scaling=(1.1, 1.1),
-	      flip_x_chance=0.5,
-	      flip_y_chance=0.5,
-	   )
+            transform_generator = random_transform_generator(
+              min_rotation=-0.1,
+              max_rotation=0.1,
+              min_translation=(-0.1, -0.1),
+              max_translation=(0.1, 0.1),
+              min_shear=-0.1,
+              max_shear=0.1,
+              min_scaling=(0.9, 0.9),
+              max_scaling=(1.1, 1.1),
+              flip_x_chance=0.5,
+              flip_y_chance=0.5,
+            )
     else:
         transform_generator = random_transform_generator(flip_x_chance=0.5)
 
@@ -414,7 +414,7 @@ def parse_args(args):
     parser.add_argument('--image-min-side',   help='Rescale the image so the smallest side is min_side.', type=int, default=800)
     parser.add_argument('--image-max-side',   help='Rescale the image if the largest side is larger than max_side.', type=int, default=1333)
     parser.add_argument('--config',           help='Path to a configuration parameters .ini file.')
-    parser.add_argument('--transform_kw_args',help='Path to file augmentation transformation .txt file.')
+    parser.add_argument('--transform_file_path', help='Path to file augmentation transformation .txt file.')
     parser.add_argument('--weighted-average', help='Compute the mAP using the weighted average of precisions among classes.', action='store_true')
     parser.add_argument('--compute-val-loss', help='Compute validation loss during training', dest='compute_val_loss', action='store_false')
 
