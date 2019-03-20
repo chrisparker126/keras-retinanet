@@ -17,6 +17,7 @@ limitations under the License.
 import numpy as np
 import random
 import warnings
+from imgaug import augmenters as iaa
 
 import keras
 
@@ -35,6 +36,63 @@ from ..utils.image import (
 )
 from ..utils.transform import transform_aabb
 
+sometimes = lambda aug: iaa.Sometimes(0.5, aug)
+# Define our sequence of augmentation steps that will be applied to every image.
+seq = iaa.Sequential(
+    [
+        #
+        # Execute 1 to 9 of the following (less important) augmenters per
+        # image. Don't execute all of them, as that would often be way too
+        # strong.
+        #
+        iaa.SomeOf((1, 9),
+            [
+
+                        # Blur each image with varying strength using
+                        # gaussian blur (sigma between 0 and .5),
+                        # average/uniform blur (kernel size 1x1)
+                        # median blur (kernel size 1x1).
+                        iaa.OneOf([
+                            iaa.GaussianBlur((0,0.5)),
+                            iaa.AverageBlur(k=(1)),
+                            iaa.MedianBlur(k=(1)),
+                        ]),
+
+                        # Sharpen each image, overlay the result with the original
+                        # image using an alpha between 0 (no sharpening) and 1
+                        # (full sharpening effect).
+                        iaa.Sharpen(alpha=(0, 0.25), lightness=(0.75, 1.5)),
+
+                        # Add gaussian noise to some images.
+                        # In 50% of these cases, the noise is randomly sampled per
+                        # channel and pixel.
+                        # In the other 50% of all cases it is sampled once per
+                        # pixel (i.e. brightness change).
+                        iaa.AdditiveGaussianNoise(
+                            loc=0, scale=(0.0, 0.01*255), per_channel=0.5
+                        ),
+
+
+                        # Add a value of -5 to 5 to each pixel.
+                        iaa.Add((-5, 5), per_channel=0.5),
+
+                        # Change brightness of images (85-115% of original value).
+                        iaa.Multiply((0.5, 1.6), per_channel=0.5),
+
+                        # Improve or worsen the contrast of images.
+                        iaa.ContrastNormalization((0.5, 1.5), per_channel=0.5),
+            
+
+                        # In some images distort local areas with varying strength.
+                        sometimes(iaa.PiecewiseAffine(scale=(0.001, 0.01)))
+                    ],
+            # do all of the above augmentations in random order
+            random_order=True
+        )
+    ],
+    # do all of the above augmentations in random order
+    random_order=True
+)
 
 class Generator(keras.utils.Sequence):
     """ Abstract generator class.
@@ -302,6 +360,9 @@ class Generator(keras.utils.Sequence):
         image_group       = self.load_image_group(group)
         annotations_group = self.load_annotations_group(group)
 
+        # apply augmentation
+        image_group = seq.augment_images(image_group)
+        
         # check validity of annotations
         image_group, annotations_group = self.filter_annotations(image_group, annotations_group, group)
 
